@@ -9,6 +9,14 @@ import (
 	"syscall"
 )
 
+//
+// @todos
+// - Implement a Screen interface for drawing
+// - Implement a null store to not store history
+// - Implement way to clear history
+// - Implement file storage with encryption
+//
+
 func main() {
 	limit := flag.Int("n", 50, "Number of items to keep in history.")
 	file := flag.String("f", fmt.Sprintf("%s/%s", GetCwd(), HistoryFilename), "Path to history file, defaults to $PWD/goppy_history.json")
