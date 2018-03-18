@@ -10,11 +10,16 @@ var (
 	EmptyHistoryError        = errors.New("history is empty")
 	FailedToWriteToFile      = errors.New("failed to write history to file")
 	FailedToReadFile         = errors.New("failed to read history from file")
+	FailedToEncrypt          = errors.New("failed to encrypt")
+	FailedToDecrypt          = errors.New("failed to decrypt")
 )
 
 const (
 	HeaderLength    = 100
 	AppName         = "Goppy"
 	SleepTime       = 1 * time.Second
-	HistoryFilename = "goppy_history.json"
+	HistoryFilename = "goppy_history.dat"
+	SaltBytes       = 32
+	Pbkdf2Iters     = 4096
+	KeySize         = 32
 )

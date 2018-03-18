@@ -1,39 +1,63 @@
 package main
 
 import (
-	"os/exec"
 	"os"
-	"runtime"
+	"golang.org/x/crypto/ssh/terminal"
+	"fmt"
+	"strings"
 )
 
-var clear map[string]func()
-
-func init() {
-	clear = make(map[string]func())
-
-	clear["linux"] = func() {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
-	clear["darwin"] = func() {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
-	clear["windows"] = func() {
-		cmd := exec.Command("cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
+type Screen interface {
+	Draw(i *ClipboardItem) error
 }
 
-func ClearScreen() {
-	value, ok := clear[runtime.GOOS]
+type TerminalScreen struct {
+	TerminalWidth int
+}
 
-	if ! ok {
-		panic("Platform is unsupported.")
+func (s *TerminalScreen) Draw(i *ClipboardItem) error {
+	fmt.Printf("%s\n", i.Contents)
+
+	fmt.Printf("%s\n", strings.Repeat("=", s.TerminalWidth))
+
+	return nil
+}
+
+func NewTerminalScreen() (*TerminalScreen, error) {
+	s := &TerminalScreen{}
+
+	width, err := s.GetWindowWidth()
+
+	if err != nil {
+		return nil, err
 	}
 
-	value()
+	s.TerminalWidth = width
+
+	s.init()
+
+	return s, nil
+}
+
+func (s *TerminalScreen) init() {
+	sideLength := (s.TerminalWidth - len(AppName)) / 2
+	fmt.Printf("%s%s%s\n", strings.Repeat("=", sideLength), "Goppy", strings.Repeat("=", sideLength))
+}
+
+func (s *TerminalScreen) GetWindowWidth() (int, error) {
+	w, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+
+	if err != nil {
+		return 0, FailedToGetTerminalWidth
+	}
+
+	return MaxInt(w, HeaderLength), nil
+}
+
+type NoScreen struct {}
+
+func (NoScreen) Draw(i *ClipboardItem) error {
+	// Pass
+
+	return nil
 }

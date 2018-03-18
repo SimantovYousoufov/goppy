@@ -7,30 +7,42 @@ import (
 	"fmt"
 	"os/signal"
 	"syscall"
+	"golang.org/x/crypto/ssh/terminal"
+	"strings"
+	"os/exec"
+	"runtime"
 )
 
-//
-// @todos
-// - Implement a Screen interface for drawing
-// - Implement a null store to not store history
-// - Implement way to clear history
-// - Implement file storage with encryption
-//
-
 func main() {
+	help := flag.Bool("h", false, "Get usage information.")
+	nullStore := flag.Bool("s", false, "Use the NullStore to prevent clipboard history from being written to disk.")
+	encryptedStore := flag.Bool("e", false, "Use the encrypted file storage format.")
 	limit := flag.Int("n", 50, "Number of items to keep in history.")
-	file := flag.String("f", fmt.Sprintf("%s/%s", GetCwd(), HistoryFilename), "Path to history file, defaults to $PWD/goppy_history.json")
+	file := flag.String("f", fmt.Sprintf("%s/%s", GetCwd(), HistoryFilename), "Path to history file.")
 
 	flag.Parse()
 
-	fs, err := NewFileStore(*file)
+	if *help {
+		flag.PrintDefaults()
+
+		os.Exit(0)
+	}
+
+	store, err := ChooseStore(*file, *nullStore, *encryptedStore)
 
 	if err != nil {
-		fmt.Println("Encountered error while opening file.")
+		fmt.Println("Could not init storage engine.")
 		panic(err)
 	}
 
-	app, err := NewApplication(fs, *limit)
+	screen, err := NewTerminalScreen()
+
+	if err != nil {
+		fmt.Println("Could not init terminal screen.")
+		panic(err)
+	}
+
+	app, err := NewApplication(store, screen, *limit)
 
 	if err != nil {
 		panic(err)
@@ -90,4 +102,53 @@ func MaxInt(a, b int) int {
 	}
 
 	return b
+}
+
+//
+// Provide a password input with no echo
+//
+func CollectPassword() string {
+	fmt.Print("Enter password: ")
+	b, err := terminal.ReadPassword(int(syscall.Stdin))
+
+	if err != nil {
+		panic("Failed to read password.")
+	}
+
+	fmt.Printf("Read pw: %s\n", string(b))
+
+	fmt.Println("")
+	return strings.TrimSpace(string(b))
+}
+
+var clear map[string]func()
+
+func init() {
+	clear = make(map[string]func())
+
+	clear["linux"] = func() {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+	clear["darwin"] = func() {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+	clear["windows"] = func() {
+		cmd := exec.Command("cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
+
+func ClearScreen() {
+	value, ok := clear[runtime.GOOS]
+
+	if ! ok {
+		panic("Platform is unsupported.")
+	}
+
+	value()
 }

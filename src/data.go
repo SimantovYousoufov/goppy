@@ -2,37 +2,24 @@ package main
 
 import (
 	"github.com/atotto/clipboard"
-	"fmt"
 	"time"
-	"strings"
-	"golang.org/x/crypto/ssh/terminal"
-	"os"
+	"encoding/json"
 )
 
 type Application struct {
-	TerminalWidth int
-	History       *History
-	Storage       Storage
+	Screen  Screen
+	History *History
+	Storage Storage
 }
 
-func NewApplication(s Storage, limit int) (*Application, error) {
+func NewApplication(storage Storage, screen Screen, limit int) (*Application, error) {
 	a := &Application{
-		Storage: s,
+		Storage: storage,
 		History: NewHistory(limit),
+		Screen:  screen,
 	}
-
-	width, err := a.GetWindowWidth()
-
-	if err != nil {
-		return nil, err
-	}
-
-	a.TerminalWidth = width
 
 	history, err := a.Storage.Read()
-
-	sideLength := (a.TerminalWidth - len(AppName)) / 2
-	fmt.Printf("%s%s%s\n", strings.Repeat("=", sideLength), "Goppy", strings.Repeat("=", sideLength))
 
 	if err == nil {
 		a.Hydrate(history)
@@ -62,43 +49,12 @@ func (a *Application) Watch() error {
 		a.History.Push(s)
 		last = s
 
-		a.Draw(a.History.First())
+		a.Screen.Draw(a.History.First())
 
 		time.Sleep(SleepTime)
 	}
 
 	return nil
-}
-
-type ClipboardItem struct {
-	Contents  string
-	Timestamp time.Time
-	next      *ClipboardItem
-}
-
-type History struct {
-	Limit int
-	Size  int
-	Head  *ClipboardItem
-}
-
-//
-// @todo implement draw separately with a Screen interface
-//
-func (a *Application) Draw(i *ClipboardItem) {
-	fmt.Printf("%s\n", i.Contents)
-
-	fmt.Printf("%s\n", strings.Repeat("=", a.TerminalWidth))
-}
-
-func (a *Application) GetWindowWidth() (int, error) {
-	w, _, err := terminal.GetSize(int(os.Stdin.Fd()))
-
-	if err != nil {
-		return 0, FailedToGetTerminalWidth
-	}
-
-	return MaxInt(w, HeaderLength), nil
 }
 
 func (a *Application) SaveHistory() error {
@@ -113,10 +69,26 @@ func (a *Application) Hydrate(items *HistoryItems) error {
 			return err
 		}
 
-		a.Draw(item)
+		a.Screen.Draw(item)
 	}
 
 	return nil
+}
+
+type ClipboardItem struct {
+	Contents  string
+	Timestamp time.Time
+	next      *ClipboardItem
+}
+
+type HistoryItems struct {
+	Items []*ClipboardItem
+}
+
+type History struct {
+	Limit int
+	Size  int
+	Head  *ClipboardItem
 }
 
 func NewHistory(limit int) *History {
@@ -141,7 +113,7 @@ func (h *History) Push(s string) error {
 
 func (h *History) PushClipboardItem(i *ClipboardItem) error {
 	if h.Size == h.Limit {
-		h.Pop()
+		h.DropLast()
 	}
 
 	i.next = h.Head
@@ -151,7 +123,7 @@ func (h *History) PushClipboardItem(i *ClipboardItem) error {
 	return nil
 }
 
-func (h *History) Pop() (*ClipboardItem, error) {
+func (h *History) DropLast() (*ClipboardItem, error) {
 	if h.Size == 0 {
 		return nil, EmptyHistoryError
 	}
@@ -162,11 +134,13 @@ func (h *History) Pop() (*ClipboardItem, error) {
 		current = current.next
 	}
 
-	// Pop last item
+	last := current.next
+
+	// DropLast last item
 	current.next = nil
 	h.Size -= 1
 
-	return current, nil
+	return last, nil
 }
 
 func (h *History) Iterate() <-chan *ClipboardItem {
@@ -185,4 +159,26 @@ func (h *History) Iterate() <-chan *ClipboardItem {
 	}()
 
 	return ch
+}
+
+func (h *History) toJson() ([]byte, error) {
+	data := &HistoryItems{
+		Items: make([]*ClipboardItem, 0),
+	}
+
+	ch := h.Iterate()
+
+	for item := range ch {
+		data.Items = append(data.Items, item)
+	}
+
+	b, err := json.Marshal(data)
+
+	return b, err
+}
+
+func (h *HistoryItems) fromJson(data []byte) (*HistoryItems, error) {
+	err := json.Unmarshal(data, h)
+
+	return h, err
 }
