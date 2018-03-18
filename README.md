@@ -34,6 +34,7 @@ Goppy is a command-line clipboard watcher. It'll keep track of your clipboard hi
     - NOTE: If you're using terminal as a view (default) and you have any form of logging enabled, your clipboard history will be stored there too.
     
 ## TODO
+
 1.Implement a Screen interface for drawing to support multiple screen types
 1.Implement way to clear history
 1.Implement some form of verbosity and debug logging
