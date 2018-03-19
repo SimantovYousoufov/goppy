@@ -61,3 +61,25 @@ func (NoScreen) Draw(i *ClipboardItem) error {
 
 	return nil
 }
+
+func truncateString(s string, maxLen, maxLines int) string {
+	originalLength := len(s)
+	splitLines := strings.Split(s, "\n")[:maxLines]
+	s = strings.Join(splitLines, "\n")
+	maxLen = maxAcceptableLength(s, maxLen)
+
+	// Nothing was truncated
+	if len(s) == originalLength {
+		return s
+	}
+
+	return s[:maxLen] + TruncatedSuffix
+}
+
+func maxAcceptableLength(s string, maxLen int) int {
+	if len(s) > maxLen {
+		return maxLen
+	}
+
+	return len(s)
+}

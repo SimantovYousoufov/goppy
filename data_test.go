@@ -55,6 +55,55 @@ func TestApplicationHydratesFromHistory(t *testing.T) {
 	}
 }
 
+func TestApplicationCanClearHistory(t *testing.T) {
+	h := &HistoryItems{
+		Items: make([]*ClipboardItem, 0),
+	}
+
+	h.Items = append(h.Items, &ClipboardItem{
+		Contents:  "first item",
+		Timestamp: time.Now().Add(5 * time.Second),
+	})
+
+	h.Items = append(h.Items, &ClipboardItem{
+		Contents:  "second item",
+		Timestamp: time.Now().Add(10 * time.Second),
+	})
+
+	h.Items = append(h.Items, &ClipboardItem{
+		Contents:  "third item",
+		Timestamp: time.Now().Add(15 * time.Second),
+	})
+
+	f := &FakeStore{
+		H: h,
+	}
+
+	a := &Application{
+		Storage: f,
+		Screen: &NoScreen{},
+		History: NewHistory(5),
+	}
+
+	err := a.Hydrate(h)
+
+	assertNilError(t, err)
+
+	if a.History.Size != 3 {
+		t.Fatal("History count mismatch")
+	}
+
+	a.ClearHistory()
+
+	if a.History.Size != 0 {
+		t.Fatal("History count mismatch")
+	}
+
+	if a.History.Head != nil {
+		t.Fatal("History did not clear")
+	}
+}
+
 func TestHistoryCanPushNewStringIntoStackAndIncrementSize(t *testing.T) {
 	h := NewHistory(5)
 
@@ -184,12 +233,33 @@ func TestHistoryCanSerializeToAndFromJson(t *testing.T) {
 	}
 }
 
+func TestHistoryCanClear(t *testing.T) {
+	h := NewHistory(5)
+	h.Push("first")
+	h.Push("second")
+	h.Push("third")
+
+	if h.Size != 3 {
+		t.Fatal("History size mismatch")
+	}
+
+	h.Clear()
+
+	if h.Size != 0 {
+		t.Fatal("History size mismatch")
+	}
+
+	if h.Head != nil {
+		t.Fatal("History was not cleared")
+	}
+}
+
 type FakeStore struct {
 	H *HistoryItems
 }
 
 func (f *FakeStore) Store(*History) error {
-	panic("implement me")
+	return nil
 }
 
 func (f *FakeStore) Read() (*HistoryItems, error) {

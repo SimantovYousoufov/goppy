@@ -22,4 +22,5 @@ const (
 	SaltBytes       = 32
 	Pbkdf2Iters     = 4096
 	KeySize         = 32
+	TruncatedSuffix = "..."
 )

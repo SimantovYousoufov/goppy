@@ -61,6 +61,12 @@ func (a *Application) SaveHistory() error {
 	return a.Storage.Store(a.History)
 }
 
+func (a *Application) ClearHistory() {
+	a.History.Clear()
+
+	a.SaveHistory()
+}
+
 func (a *Application) Hydrate(items *HistoryItems) error {
 	for _, item := range items.Items {
 		err := a.History.PushClipboardItem(item)
@@ -175,6 +181,11 @@ func (h *History) toJson() ([]byte, error) {
 	b, err := json.Marshal(data)
 
 	return b, err
+}
+
+func (h *History) Clear() {
+	h.Head = nil
+	h.Size = 0
 }
 
 func (h *HistoryItems) fromJson(data []byte) (*HistoryItems, error) {
