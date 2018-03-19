@@ -3,6 +3,11 @@ Goppy
 
 Goppy is a command-line clipboard watcher. It'll keep track of your clipboard history in a terminal window and manage storing it behind the scenes for you. Goppy will hydrate clipboard history from storage.
 
+## Warnings
+
+- While Goppy keeps all data 100% local, it has access to your clipboard, this means Goppy can read any sensitive information like passwords, API keys, etc that you copy. Please make sure you read the source and are comfortable with this before using Goppy.
+- Prefer to not store your history to disk, but if you choose to do so, use the Encrypted Store `$ goppy -e`
+
 ## Usage:
 
 * Options:
@@ -10,8 +15,8 @@ Goppy is a command-line clipboard watcher. It'll keep track of your clipboard hi
 ```
   -e	Use the encrypted file storage format.
   -f string
-    	Path to history file (default "$PWD/goppy_history.dat")
-  -h	Get usage information
+    	Path to history file. (default "/usr/local/etc/goppy/goppy_history.dat")
+  -h	Get usage information.
   -n int
     	Number of items to keep in history. (default 50)
   -s	Use the NullStore to prevent clipboard history from being written to disk.
@@ -35,6 +40,7 @@ Goppy is a command-line clipboard watcher. It'll keep track of your clipboard hi
     
 ## TODO
 
-1. Implement way to clear history
+1. Implement way to clear history via CLI
 1. Implement some form of verbosity and debug logging
 1. Ignore new copy events if the string already exists in history beyond the most recent event
+1. Create a nice GUI for goppy as an alternative to using the terminal view

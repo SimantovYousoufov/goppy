@@ -18,9 +18,16 @@ func main() {
 	nullStore := flag.Bool("s", false, "Use the NullStore to prevent clipboard history from being written to disk.")
 	encryptedStore := flag.Bool("e", false, "Use the encrypted file storage format.")
 	limit := flag.Int("n", 50, "Number of items to keep in history.")
-	file := flag.String("f", fmt.Sprintf("%s/%s", GetCwd(), HistoryFilename), "Path to history file.")
+	file := flag.String("f", DefaultHistoryFile, "Path to history file.")
 
 	flag.Parse()
+
+	err := checkOrCreateGoppyConfigFolder()
+
+	if err != nil {
+		fmt.Println("Could not create Goppy config directory.")
+		panic(err)
+	}
 
 	if *help {
 		flag.PrintDefaults()

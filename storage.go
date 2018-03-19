@@ -194,3 +194,13 @@ func (es *EncryptedStore) Read() (*HistoryItems, error) {
 func (es *EncryptedStore) Clear() error {
 	return es.file.Truncate(0)
 }
+
+func checkOrCreateGoppyConfigFolder() error {
+	_, err := os.Stat(GoppyConfigFolder)
+
+	if os.IsNotExist(err) {
+		return os.Mkdir(GoppyConfigFolder, 0755)
+	}
+
+	return err
+}

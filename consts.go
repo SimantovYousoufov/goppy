@@ -15,12 +15,14 @@ var (
 )
 
 const (
-	HeaderLength    = 100
-	AppName         = "Goppy"
-	SleepTime       = 1 * time.Second
-	HistoryFilename = "goppy_history.dat"
-	SaltBytes       = 32
-	Pbkdf2Iters     = 4096
-	KeySize         = 32
-	TruncatedSuffix = "..."
+	HeaderLength       = 100
+	AppName            = "Goppy"
+	SleepTime          = 1 * time.Second
+	HistoryFilename    = "goppy_history.dat"
+	GoppyConfigFolder  = "/usr/local/etc/goppy/"
+	DefaultHistoryFile = GoppyConfigFolder + HistoryFilename
+	SaltBytes          = 32
+	Pbkdf2Iters        = 4096
+	KeySize            = 32
+	TruncatedSuffix    = "..."
 )
