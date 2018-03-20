@@ -122,8 +122,6 @@ func CollectPassword() string {
 		panic("Failed to read password.")
 	}
 
-	fmt.Printf("Read pw: %s\n", string(b))
-
 	fmt.Println("")
 	return strings.TrimSpace(string(b))
 }

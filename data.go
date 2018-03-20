@@ -82,7 +82,7 @@ func (a *Application) Hydrate(items *HistoryItems) error {
 }
 
 type ClipboardItem struct {
-	Contents  string
+	Contents  []byte
 	Timestamp time.Time
 	next      *ClipboardItem
 }
@@ -110,7 +110,7 @@ func (h *History) First() *ClipboardItem {
 
 func (h *History) Push(s string) error {
 	h.PushClipboardItem(&ClipboardItem{
-		Contents:  s,
+		Contents:  []byte(s),
 		Timestamp: time.Now(),
 	})
 

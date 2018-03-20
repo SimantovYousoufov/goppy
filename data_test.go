@@ -11,17 +11,17 @@ func TestApplicationHydratesFromHistory(t *testing.T) {
 	}
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "first item",
+		Contents:  []byte("first item"),
 		Timestamp: time.Now().Add(5 * time.Second),
 	})
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "second item",
+		Contents:  []byte("second item"),
 		Timestamp: time.Now().Add(10 * time.Second),
 	})
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "third item",
+		Contents:  []byte("third item"),
 		Timestamp: time.Now().Add(15 * time.Second),
 	})
 
@@ -47,7 +47,7 @@ func TestApplicationHydratesFromHistory(t *testing.T) {
 
 	i := 2
 	for item := range ch {
-		if item.Contents != h.Items[i].Contents {
+		if string(item.Contents) != string(h.Items[i].Contents) {
 			t.Fatal("History items were not hydrated properly")
 		}
 
@@ -61,17 +61,17 @@ func TestApplicationCanClearHistory(t *testing.T) {
 	}
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "first item",
+		Contents:  []byte("first item"),
 		Timestamp: time.Now().Add(5 * time.Second),
 	})
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "second item",
+		Contents:  []byte("second item"),
 		Timestamp: time.Now().Add(10 * time.Second),
 	})
 
 	h.Items = append(h.Items, &ClipboardItem{
-		Contents:  "third item",
+		Contents:  []byte("third item"),
 		Timestamp: time.Now().Add(15 * time.Second),
 	})
 
@@ -117,7 +117,7 @@ func TestHistoryCanPushNewStringIntoStackAndIncrementSize(t *testing.T) {
 		t.Fatal("History size mismatch")
 	}
 
-	if h.First().Contents != "first" {
+	if string(h.First().Contents) != "first" {
 		t.Fatal("History did not set first item")
 	}
 
@@ -127,7 +127,7 @@ func TestHistoryCanPushNewStringIntoStackAndIncrementSize(t *testing.T) {
 		t.Fatal("History size mismatch")
 	}
 
-	if h.First().Contents != "second" {
+	if string(h.First().Contents) != "second" {
 		t.Fatal("History did not set second item")
 	}
 
@@ -137,7 +137,7 @@ func TestHistoryCanPushNewStringIntoStackAndIncrementSize(t *testing.T) {
 		t.Fatal("History size mismatch")
 	}
 
-	if h.First().Contents != "third" {
+	if string(h.First().Contents) != "third" {
 		t.Fatal("History did not set third item")
 	}
 }
@@ -156,7 +156,7 @@ func TestHistoryCanDropOldestItemFromStackAndDecrementSize(t *testing.T) {
 
 	assertNilError(t, err)
 
-	if oldest.Contents != "first" {
+	if string(oldest.Contents) != "first" {
 		t.Fatal("History failed to drop oldest item from stack")
 	}
 }
@@ -183,7 +183,7 @@ func TestHistoryDropsOldestIfAtSizeLimit(t *testing.T) {
 
 	assertNilError(t, err)
 
-	if oldest.Contents != "second" {
+	if string(oldest.Contents) != "second" {
 		t.Fatal("History failed to drop items in expected order")
 	}
 }
@@ -220,15 +220,15 @@ func TestHistoryCanSerializeToAndFromJson(t *testing.T) {
 		t.Fatal("History size mismatch")
 	}
 
-	if newH.Items[0].Contents != "third" {
+	if string(newH.Items[0].Contents) != "third" {
 		t.Fatal("History order mismatch")
 	}
 
-	if newH.Items[1].Contents != "second" {
+	if string(newH.Items[1].Contents) != "second" {
 		t.Fatal("History order mismatch")
 	}
 
-	if newH.Items[2].Contents != "first" {
+	if string(newH.Items[2].Contents) != "first" {
 		t.Fatal("History order mismatch")
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 type Screen interface {
@@ -15,24 +16,10 @@ type TerminalScreen struct {
 	TerminalWidth int
 }
 
-func (s *TerminalScreen) Draw(i *ClipboardItem) error {
-	fmt.Printf("%s\n", i.Contents)
-
-	fmt.Printf("%s\n", strings.Repeat("=", s.TerminalWidth))
-
-	return nil
-}
-
 func NewTerminalScreen() (*TerminalScreen, error) {
 	s := &TerminalScreen{}
 
-	width, err := s.GetWindowWidth()
-
-	if err != nil {
-		return nil, err
-	}
-
-	s.TerminalWidth = width
+	s.TerminalWidth = s.getWindowWidth()
 
 	s.init()
 
@@ -44,14 +31,26 @@ func (s *TerminalScreen) init() {
 	fmt.Printf("%s%s%s\n", strings.Repeat("=", sideLength), "Goppy", strings.Repeat("=", sideLength))
 }
 
-func (s *TerminalScreen) GetWindowWidth() (int, error) {
+func (s *TerminalScreen) Draw(i *ClipboardItem) error {
+	if ! utf8.Valid(i.Contents) {
+		fmt.Printf("<Cannot display binary data>\n")
+	} else {
+		fmt.Printf("%s\n", i.Contents)
+	}
+
+	fmt.Printf("%s\n", strings.Repeat("=", s.TerminalWidth))
+
+	return nil
+}
+
+func (s *TerminalScreen) getWindowWidth() int {
 	w, _, err := terminal.GetSize(int(os.Stdin.Fd()))
 
 	if err != nil {
-		return 0, FailedToGetTerminalWidth
+		w = 0
 	}
 
-	return MaxInt(w, HeaderLength), nil
+	return MaxInt(w, HeaderLength)
 }
 
 type NoScreen struct {}
