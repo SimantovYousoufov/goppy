@@ -40,7 +40,8 @@ Goppy is a command-line clipboard watcher. It'll keep track of your clipboard hi
     
 ## TODO
 
-1. Implement way to clear history via CLI
 1. Implement some form of verbosity and debug logging
 1. Ignore new copy events if the string already exists in history beyond the most recent event
 1. Create a nice GUI for goppy as an alternative to using the terminal view
+1. Implement dependency manager
+1. Implement an easy installer (i.e. brew)
