@@ -89,7 +89,7 @@ func (fs *FileStore) Read() (*HistoryItems, error) {
 }
 
 func (fs *FileStore) Clear() error {
-	return fs.file.Truncate(0)
+	return truncateFile(fs.file)
 }
 
 //
@@ -192,7 +192,7 @@ func (es *EncryptedStore) Read() (*HistoryItems, error) {
 }
 
 func (es *EncryptedStore) Clear() error {
-	return es.file.Truncate(0)
+	return truncateFile(es.file)
 }
 
 func checkOrCreateGoppyConfigFolder() error {
@@ -203,4 +203,8 @@ func checkOrCreateGoppyConfigFolder() error {
 	}
 
 	return err
+}
+
+func truncateFile(file *os.File) error {
+	return file.Truncate(0)
 }

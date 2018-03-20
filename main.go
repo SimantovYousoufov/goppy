@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"os"
-	"path/filepath"
 	"fmt"
 	"os/signal"
 	"syscall"
@@ -14,67 +13,71 @@ import (
 )
 
 func main() {
-	help := flag.Bool("h", false, "Get usage information.")
-	nullStore := flag.Bool("s", false, "Use the NullStore to prevent clipboard history from being written to disk.")
-	encryptedStore := flag.Bool("e", false, "Use the encrypted file storage format.")
-	limit := flag.Int("n", 50, "Number of items to keep in history.")
-	file := flag.String("f", DefaultHistoryFile, "Path to history file.")
-
-	flag.Parse()
-
 	err := checkOrCreateGoppyConfigFolder()
+	AssertNilError(err)
 
-	if err != nil {
-		fmt.Println("Could not create Goppy config directory.")
-		panic(err)
+	// Watch command setup
+	watchCommand := flag.NewFlagSet("watch", flag.ExitOnError)
+	nullStore := watchCommand.Bool("s", false, "Use the NullStore to prevent clipboard history from being written to disk.")
+	encryptedStore := watchCommand.Bool("e", false, "Use the encrypted file storage format.")
+	limit := watchCommand.Int("n", 50, "Number of items to keep in history.")
+	file := watchCommand.String("f", DefaultHistoryFile, "Path to history file.")
+
+	// Clear command setup
+	clearCommand := flag.NewFlagSet("clear", flag.ExitOnError)
+	clearFile := clearCommand.String("f", DefaultHistoryFile, "Path to history file.")
+
+	// Help command setup
+	helpCommand := flag.NewFlagSet("help", flag.ExitOnError)
+
+	commands := map[string]*flag.FlagSet{
+		"watch": watchCommand,
+		"clear": clearCommand,
+		"help":  helpCommand,
 	}
 
-	if *help {
-		flag.PrintDefaults()
+	if len(os.Args) < 2 {
+		fmt.Println("A subcommand is required.")
+		fmt.Println("Usage:")
+		fmt.Println("goppy command [arg1] [arg2] ...")
 
-		os.Exit(0)
+		printDefaults(commands)
+		os.Exit(1)
 	}
 
-	store, err := ChooseStore(*file, *nullStore, *encryptedStore)
+	subCommand := os.Args[1]
 
-	if err != nil {
-		fmt.Println("Could not init storage engine.")
-		panic(err)
+	switch subCommand {
+	case "watch":
+		watchCommand.Parse(os.Args[2:])
+
+		store, err := ChooseStore(*file, *nullStore, *encryptedStore)
+
+		AssertNilError(err)
+
+		screen, err := NewTerminalScreen()
+
+		AssertNilError(err)
+
+		app, err := NewApplication(store, screen, *limit)
+
+		CatchSignals(app)
+
+		err = app.Watch()
+
+		AssertNilError(err)
+	case "clear":
+		store, err := NewFileStore(*clearFile)
+
+		AssertNilError(err)
+
+		store.Clear()
+	case "help":
+		printDefaults(commands)
+	default:
+		fmt.Printf("%s not supported.\n", subCommand)
+		os.Exit(1)
 	}
-
-	screen, err := NewTerminalScreen()
-
-	if err != nil {
-		fmt.Println("Could not init terminal screen.")
-		panic(err)
-	}
-
-	app, err := NewApplication(store, screen, *limit)
-
-	if err != nil {
-		panic(err)
-	}
-
-	CatchSignals(app)
-
-	err = app.Watch()
-
-	if err != nil {
-		panic(err)
-	}
-}
-
-//
-// Find this applications current working directory
-//
-func GetCwd() string {
-	ex, err := os.Executable()
-
-	if err != nil {
-		panic(err)
-	}
-
-	return filepath.Dir(ex)
 }
 
 //
@@ -156,4 +159,27 @@ func ClearScreen() {
 	}
 
 	value()
+}
+
+// AssertNilError is intended to be called with which error return to simplify error handling
+// Usage:
+// foo, err := GetFoo()
+// AssertNilError(err)
+// DoSomethingBecauseNoError()
+func AssertNilError(err error) {
+	if err == nil {
+		return
+	}
+
+	fmt.Printf("\nEncountered an error: %s\n", err.Error())
+
+	os.Exit(1)
+}
+
+func printDefaults(commands map[string]*flag.FlagSet) {
+	for cmd, set := range commands {
+		fmt.Printf("Usage for `%s`:\n", cmd)
+		set.PrintDefaults()
+		fmt.Println()
+	}
 }
